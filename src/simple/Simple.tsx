@@ -8,7 +8,7 @@ import { validateForm } from "src/simple/validateForm"
 
 export function Simple() {
   const [email, handleEmailChange] = useInput("")
-  const [password, handleLastNameChange] = useInput("")
+  const [password, handlePasswordChange] = useInput("")
   const [formValidationState, setFormValidationState] = useState<
     Option<FormValidationState>
   >(none)
@@ -41,7 +41,7 @@ export function Simple() {
             <input
               type="password"
               value={password}
-              onChange={handleLastNameChange}
+              onChange={handlePasswordChange}
             />
           </Label>
         </Row>
