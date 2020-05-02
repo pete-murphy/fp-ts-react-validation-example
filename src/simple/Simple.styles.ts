@@ -1,16 +1,22 @@
 import styled, { css } from "styled-components"
 
-export const inputStyle = css`
+const borderRadius = css`
+  border-radius: 4px;
+`
+
+const inputStyle = css`
   outline: none;
   font-size: 1rem;
-  border-radius: 4px;
   border: none;
   &:focus {
     box-shadow: 0 0 0 3px #1d70b899, 0 0 0 4px #1d70b833;
   }
+  ${borderRadius}
 `
 
 export const Row = styled.div`
+  display: flex;
+  flex-direction: column;
   padding: 1rem 0;
 `
 
@@ -39,7 +45,7 @@ export const Form = styled.form`
 
 export const Button = styled.button`
   padding: 0.5rem 1rem;
-  float: right;
+  align-self: flex-end;
   font-size: 1rem;
   background: #003078;
   color: white;
@@ -51,4 +57,18 @@ export const Button = styled.button`
   &:active {
     background: white;
   }
+`
+
+export const SuccessContainer = styled.div`
+  ${borderRadius};
+  padding: 1rem;
+  background: #00703c;
+  color: white;
+`
+
+export const ErrorContainer = styled.div`
+  ${borderRadius};
+  padding: 1rem;
+  background: #d4351c;
+  color: white;
 `

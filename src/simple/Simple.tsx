@@ -1,8 +1,17 @@
 import React, { useState, ChangeEventHandler } from "react"
-import { Option, none, some, fold } from "fp-ts/lib/Option"
+import { Option, none, some, fold as foldOption } from "fp-ts/lib/Option"
+import { fold as foldEither } from "fp-ts/lib/Either"
 import { pipe } from "fp-ts/lib/pipeable"
 
-import { Main, Form, Row, Label, Button } from "src/simple/Simple.styles"
+import {
+  Main,
+  Form,
+  Row,
+  Label,
+  Button,
+  SuccessContainer,
+  ErrorContainer,
+} from "src/simple/Simple.styles"
 import { FormValidationState } from "src/simple/Simple.types"
 import { validateForm } from "src/simple/validateForm"
 
@@ -42,6 +51,7 @@ export function Simple() {
               type="password"
               value={password}
               onChange={handlePasswordChange}
+              autoComplete="off"
             />
           </Label>
         </Row>
@@ -51,9 +61,26 @@ export function Simple() {
         <Row>
           {pipe(
             formValidationState,
-            fold(
+            foldOption(
               () => null,
-              st => <pre>{JSON.stringify(st, null, 2)}</pre>,
+              foldEither(
+                errors => (
+                  <ErrorContainer>
+                    <h2>Error</h2>
+                    <ul>
+                      {errors.map(e => (
+                        <li>{e}</li>
+                      ))}
+                    </ul>
+                  </ErrorContainer>
+                ),
+                validForm => (
+                  <SuccessContainer>
+                    <h2>Success!</h2>
+                    <p>Registered with email {validForm.email}!</p>
+                  </SuccessContainer>
+                ),
+              ),
             ),
           )}
         </Row>
