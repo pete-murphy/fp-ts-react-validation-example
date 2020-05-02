@@ -1,9 +1,6 @@
 import React from "react"
+import { Simple } from "src/simple/Simple"
 
 export function App() {
-  return (
-    <div className="App">
-      <h1>Hello world!</h1>
-    </div>
-  )
+  return <Simple />
 }
