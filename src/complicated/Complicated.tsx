@@ -1,71 +1,49 @@
 import React, { ReactNode, useState } from "react"
-import { some, toNullable, none } from "fp-ts/lib/Option"
+import { some, toNullable } from "fp-ts/lib/Option"
 import { Lens } from "monocle-ts"
 import { pipe } from "fp-ts/lib/pipeable"
-import { sequenceS, sequenceT } from "fp-ts/lib/Apply"
-import {
-  ReadonlyNonEmptyArray,
-  map as mapNEA,
-  readonlyNonEmptyArray,
-} from "fp-ts/lib/ReadonlyNonEmptyArray"
-import { reader } from "fp-ts/lib/Reader"
-import { mapLeft, either, fold, fromPredicate } from "fp-ts/lib/Either"
+import { sequenceS } from "fp-ts/lib/Apply"
+import "styled-components/macro"
 
 import { Form, focus, form, map } from "src/lib/Form"
-import { sequence_ } from "src/lib/Foldable"
-import { validateLength } from "src/simple/validateForm"
-import { Validator } from "src/lib/Validator"
+import { validated, nonEmpty, mustEqual } from "src/lib/Validator"
+import { eqString } from "fp-ts/lib/Eq"
+import { Label, Form as StyledForm, Main } from "src/simple/Simple.styles"
+import { css } from "styled-components"
 
-type Person = {
+type PersonForm = {
   name: string
   email: string
+  confirmEmail: string
 }
 
-const mkPersonLens = Lens.fromProp<Person>()
+const mkPersonLens = Lens.fromProp<PersonForm>()
 const nameLens = mkPersonLens("name")
 const emailLens = mkPersonLens("email")
+const confirmEmailLens = mkPersonLens("confirmEmail")
 
-const textInput = (attrs: {
-  label: string
-  validators: ReadonlyNonEmptyArray<Validator<string, string>>
-}): Form<string, string> => input => ({
+const textInput = (label: string): Form<string, string> => input => ({
   ui: handleChange => (
-    <label>
-      {attrs.label}
+    <Label>
+      <span>{label}</span>
       <input onChange={e => handleChange(e.target.value)} />
-    </label>
+    </Label>
   ),
-  result: pipe(
-    input,
-    sequenceT(reader)(attrs.validators[0], ...attrs.validators.slice(1)),
-    mapNEA(mapLeft(readonlyNonEmptyArray.of)),
-    sequence_(either, readonlyNonEmptyArray),
-    fold(
-      () => none,
-      () => some(input),
-    ),
-  ),
+  result: some(input),
 })
 
-const personForm: Form<Person, ReactNode> = pipe(
+const personForm: Form<PersonForm, ReactNode> = pipe(
   sequenceS(form)({
-    name: focus(nameLens)(
-      textInput({
-        label: "Name",
-        validators: [validateLength({ min: 2, max: 100 })],
-      }),
+    name: pipe(textInput("Name"), validated(nonEmpty("Name")), focus(nameLens)),
+    email: pipe(
+      textInput("Email"),
+      validated(nonEmpty("Email")),
+      focus(emailLens),
     ),
-    email: focus(emailLens)(
-      textInput({
-        label: "Email",
-        validators: [
-          validateLength({ min: 6, max: 30 }),
-          fromPredicate(
-            (str: string) => str.includes("@"),
-            () => "Invalid email",
-          ),
-        ],
-      }),
+    confirmEmail: pipe(
+      textInput("Confirm email"),
+      validated(mustEqual(eqString)("foo", "Emails must be equal")),
+      focus(confirmEmailLens),
     ),
   }),
   map(({ name, email }) => (
@@ -76,11 +54,27 @@ const personForm: Form<Person, ReactNode> = pipe(
 )
 
 export function Complicated() {
-  const [person, setPerson] = useState<Person>({ name: "", email: "" })
+  const [person, setPerson] = useState<PersonForm>({
+    name: "",
+    email: "",
+    confirmEmail: "",
+  })
   return (
-    <>
-      <div>{personForm(person).ui(setPerson)}</div>
-      <div>{pipe(personForm(person).result, toNullable)}</div>
-    </>
+    <Main>
+      <h1
+        css={css`
+          color: tomato;
+        `}
+      >
+        Currently broken{" "}
+        <span role="img" aria-label="sad face">
+          ☹️
+        </span>
+      </h1>
+      <StyledForm>
+        <div>{personForm(person).ui(setPerson)}</div>
+        <div>{pipe(personForm(person).result, toNullable)}</div>
+      </StyledForm>
+    </Main>
   )
 }

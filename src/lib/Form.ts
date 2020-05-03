@@ -61,3 +61,16 @@ export const focus = <I, J>(lens: Lens<I, J>) => <A>(
     }
   }
 }
+
+export const focusWith = <I, J, K>(lens: Lens<I, J>, lensK: Lens<I, K>) => <A>(
+  form: Form<[J, K], A>,
+): Form<I, A> => {
+  return input => {
+    const [j, k] = [lens.get(input), lensK.get(input)]
+    const { ui, result } = form([j, k])
+    return {
+      ui: handler => ui(([x]) => handler(lens.set(x)(input))),
+      result,
+    }
+  }
+}
