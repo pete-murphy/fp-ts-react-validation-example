@@ -3,24 +3,21 @@ import { some, toNullable } from "fp-ts/lib/Option"
 import { Lens } from "monocle-ts"
 import { pipe } from "fp-ts/lib/pipeable"
 import { sequenceS } from "fp-ts/lib/Apply"
+import { css } from "styled-components"
 import "styled-components/macro"
 
 import { Form, focus, form, map } from "src/lib/Form"
-import { validated, nonEmpty, mustEqual } from "src/lib/Validator"
-import { eqString } from "fp-ts/lib/Eq"
-import { Label, Form as StyledForm, Main } from "src/simple/Simple.styles"
-import { css } from "styled-components"
+import { validated, nonEmpty } from "src/lib/Validator"
+import { Label, Main } from "src/simple/Simple.styles"
 
-type PersonForm = {
+type Person = {
   name: string
   email: string
-  confirmEmail: string
 }
 
-const mkPersonLens = Lens.fromProp<PersonForm>()
+const mkPersonLens = Lens.fromProp<Person>()
 const nameLens = mkPersonLens("name")
 const emailLens = mkPersonLens("email")
-const confirmEmailLens = mkPersonLens("confirmEmail")
 
 const textInput = (label: string): Form<string, string> => input => ({
   ui: handleChange => (
@@ -32,18 +29,13 @@ const textInput = (label: string): Form<string, string> => input => ({
   result: some(input),
 })
 
-const personForm: Form<PersonForm, ReactNode> = pipe(
+const personForm: Form<Person, ReactNode> = pipe(
   sequenceS(form)({
     name: pipe(textInput("Name"), validated(nonEmpty("Name")), focus(nameLens)),
     email: pipe(
       textInput("Email"),
       validated(nonEmpty("Email")),
       focus(emailLens),
-    ),
-    confirmEmail: pipe(
-      textInput("Confirm email"),
-      validated(mustEqual(eqString)("foo", "Emails must be equal")),
-      focus(confirmEmailLens),
     ),
   }),
   map(({ name, email }) => (
@@ -54,10 +46,9 @@ const personForm: Form<PersonForm, ReactNode> = pipe(
 )
 
 export function Complicated() {
-  const [person, setPerson] = useState<PersonForm>({
+  const [person, setPerson] = useState<Person>({
     name: "",
     email: "",
-    confirmEmail: "",
   })
   return (
     <Main>
@@ -71,10 +62,14 @@ export function Complicated() {
           ☹️
         </span>
       </h1>
-      <StyledForm>
+      <form
+        css={css`
+          padding: 0 2rem;
+        `}
+      >
         <div>{personForm(person).ui(setPerson)}</div>
         <div>{pipe(personForm(person).result, toNullable)}</div>
-      </StyledForm>
+      </form>
     </Main>
   )
 }
