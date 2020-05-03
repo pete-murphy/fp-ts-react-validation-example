@@ -45,7 +45,7 @@ const personForm: Form<Person, ReactNode> = pipe(
   )),
 )
 
-export function Complicated() {
+export function PersonForm() {
   const [person, setPerson] = useState<Person>({
     name: "",
     email: "",

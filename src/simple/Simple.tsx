@@ -15,7 +15,7 @@ import {
 import { FormValidationState } from "src/simple/Simple.types"
 import { validateForm } from "src/simple/validateForm"
 
-export function Simple() {
+export function PersonForm() {
   const [email, handleEmailChange] = useInput("")
   const [password, handlePasswordChange] = useInput("")
   const [formValidationState, setFormValidationState] = useState<
