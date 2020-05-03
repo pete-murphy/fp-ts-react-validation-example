@@ -8,7 +8,6 @@ import {
   some,
 } from "fp-ts/lib/Option"
 import { pipe, pipeable } from "fp-ts/lib/pipeable"
-import { Either } from "fp-ts/lib/Either"
 
 import { monoidJsx } from "src/lib/Monoid"
 
@@ -22,18 +21,16 @@ export const URI = "Form"
 
 export type URI = typeof URI
 
-type UI = ReactNode
-
 export interface Form<E, A> {
   (input: E): {
-    ui: (f: (i: E) => void) => UI
+    ui: (handler: (i: E) => void) => ReactNode
     result: Option<A>
   }
 }
 
 export function of<E, A>(a: A): Form<E, A> {
   return (_input: E) => ({
-    ui: _ => monoidJsx.empty,
+    ui: _handler => monoidJsx.empty,
     result: some(a),
   })
 }
@@ -59,12 +56,8 @@ export const focus = <I, J>(lens: Lens<I, J>) => <A>(
   return input => {
     const { ui, result } = form(lens.get(input))
     return {
-      ui: onChange => ui(x => onChange(lens.set(x)(input))),
+      ui: handler => ui(x => handler(lens.set(x)(input))),
       result,
     }
   }
 }
-
-export type Validator<I, A> = (i: I) => Either<string, A>
-
-// export const nonNull = (str: string) =>

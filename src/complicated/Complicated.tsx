@@ -9,11 +9,12 @@ import {
   readonlyNonEmptyArray,
 } from "fp-ts/lib/ReadonlyNonEmptyArray"
 import { reader } from "fp-ts/lib/Reader"
-
-import { Form, focus, form, map, Validator } from "src/lib/Form"
-import { sequence_ } from "src/lib/Foldable"
 import { mapLeft, either, fold, fromPredicate } from "fp-ts/lib/Either"
+
+import { Form, focus, form, map } from "src/lib/Form"
+import { sequence_ } from "src/lib/Foldable"
 import { validateLength } from "src/simple/validateForm"
+import { Validator } from "src/lib/Validator"
 
 type Person = {
   name: string
