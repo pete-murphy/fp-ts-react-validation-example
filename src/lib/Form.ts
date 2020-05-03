@@ -8,9 +8,9 @@ import {
   some,
 } from "fp-ts/lib/Option"
 import { pipe, pipeable } from "fp-ts/lib/pipeable"
+import { Either } from "fp-ts/lib/Either"
 
 import { monoidJsx } from "src/lib/Monoid"
-import { Either } from "fp-ts/lib/Either"
 
 declare module "fp-ts/lib/HKT" {
   interface URItoKind2<E, A> {

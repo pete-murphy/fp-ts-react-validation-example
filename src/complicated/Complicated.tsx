@@ -1,10 +1,19 @@
 import React, { ReactNode, useState } from "react"
-import { some } from "fp-ts/lib/Option"
+import { some, toNullable, none } from "fp-ts/lib/Option"
 import { Lens } from "monocle-ts"
 import { pipe } from "fp-ts/lib/pipeable"
-import { sequenceS } from "fp-ts/lib/Apply"
+import { sequenceS, sequenceT } from "fp-ts/lib/Apply"
+import {
+  ReadonlyNonEmptyArray,
+  map as mapNEA,
+  readonlyNonEmptyArray,
+} from "fp-ts/lib/ReadonlyNonEmptyArray"
+import { reader } from "fp-ts/lib/Reader"
 
-import { Form, focus, form, map } from "src/lib/Form"
+import { Form, focus, form, map, Validator } from "src/lib/Form"
+import { sequence_ } from "src/lib/Foldable"
+import { mapLeft, either, fold, fromPredicate } from "fp-ts/lib/Either"
+import { validateLength } from "src/simple/validateForm"
 
 type Person = {
   name: string
@@ -15,20 +24,48 @@ const mkPersonLens = Lens.fromProp<Person>()
 const nameLens = mkPersonLens("name")
 const emailLens = mkPersonLens("email")
 
-const textInput = (label: string): Form<string, string> => input => ({
+const textInput = (attrs: {
+  label: string
+  validators: ReadonlyNonEmptyArray<Validator<string, string>>
+}): Form<string, string> => input => ({
   ui: handleChange => (
     <label>
-      {label}
+      {attrs.label}
       <input onChange={e => handleChange(e.target.value)} />
     </label>
   ),
-  result: some(input),
+  result: pipe(
+    input,
+    sequenceT(reader)(attrs.validators[0], ...attrs.validators.slice(1)),
+    mapNEA(mapLeft(readonlyNonEmptyArray.of)),
+    sequence_(either, readonlyNonEmptyArray),
+    fold(
+      () => none,
+      () => some(input),
+    ),
+  ),
 })
 
 const personForm: Form<Person, ReactNode> = pipe(
   sequenceS(form)({
-    name: focus(nameLens)(textInput("Name")),
-    email: focus(emailLens)(textInput("Email")),
+    name: focus(nameLens)(
+      textInput({
+        label: "Name",
+        validators: [validateLength({ min: 2, max: 100 })],
+      }),
+    ),
+    email: focus(emailLens)(
+      textInput({
+        label: "Email",
+        validators: [
+          validateLength({ min: 6, max: 30 }),
+          fromPredicate(
+            (str: string) => str.includes("@"),
+            () => "Invalid email",
+          ),
+        ],
+      }),
+    ),
   }),
   map(({ name, email }) => (
     <p>
@@ -39,5 +76,10 @@ const personForm: Form<Person, ReactNode> = pipe(
 
 export function Complicated() {
   const [person, setPerson] = useState<Person>({ name: "", email: "" })
-  return <>{personForm(person).ui(setPerson)}</>
+  return (
+    <>
+      <div>{personForm(person).ui(setPerson)}</div>
+      <div>{pipe(personForm(person).result, toNullable)}</div>
+    </>
+  )
 }

@@ -15,7 +15,7 @@ import { sequence_ } from "src/lib/Foldable"
 
 const { getSemigroup, readonlyNonEmptyArray } = NEA
 
-const validateLength = ({ min, max }: { min: number; max: number }) => (
+export const validateLength = ({ min, max }: { min: number; max: number }) => (
   str: string,
 ): Either<ValidationError, string> =>
   pipe(
@@ -59,7 +59,7 @@ const validatePassword = (str: string) =>
     chain(() => pipe(str, isoPassword.wrap, V.of)),
   )
 
-const emailValidators = sequenceT(reader)(
+export const emailValidators = sequenceT(reader)(
   validateLength({ min: 6, max: 30 }),
   fromPredicate(
     (str: string) => str.includes("@"),
