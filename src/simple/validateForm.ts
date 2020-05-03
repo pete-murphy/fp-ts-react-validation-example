@@ -9,10 +9,9 @@ import { pipe } from "fp-ts/lib/pipeable"
 import * as NEA from "fp-ts/lib/ReadonlyNonEmptyArray"
 import { sequenceT, sequenceS } from "fp-ts/lib/Apply"
 import { reader } from "fp-ts/lib/Reader"
-import { traverse_ } from "fp-ts/lib/Foldable"
-import { identity } from "fp-ts/lib/function"
 
 import { ValidationError, isoEmail, isoPassword } from "src/simple/Simple.types"
+import { sequence_ } from "src/lib/Foldable"
 
 const { getSemigroup, readonlyNonEmptyArray } = NEA
 
@@ -56,8 +55,7 @@ const validatePassword = (str: string) =>
   pipe(
     passwordValidators(str),
     NEA.map(mapLeft(readonlyNonEmptyArray.of)),
-    // @TODO: Write `sequence_`
-    vs => traverse_(V, readonlyNonEmptyArray)(vs, identity),
+    sequence_(V, readonlyNonEmptyArray),
     chain(() => pipe(str, isoPassword.wrap, V.of)),
   )
 
@@ -73,7 +71,7 @@ const validateEmail = (str: string) =>
   pipe(
     emailValidators(str),
     NEA.map(mapLeft(readonlyNonEmptyArray.of)),
-    vs => traverse_(V, readonlyNonEmptyArray)(vs, identity),
+    sequence_(V, readonlyNonEmptyArray),
     chain(() => pipe(str, isoEmail.wrap, V.of)),
   )
 
