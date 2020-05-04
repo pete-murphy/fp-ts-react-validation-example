@@ -1,25 +1,26 @@
 import React, { ReactNode, useState } from "react"
-import { some, toNullable } from "fp-ts/lib/Option"
+import { some, fold as optionFold } from "fp-ts/lib/Option"
 import { Lens } from "monocle-ts"
 import { pipe } from "fp-ts/lib/pipeable"
 import { sequenceS } from "fp-ts/lib/Apply"
-import { css } from "styled-components"
-import "styled-components/macro"
 
-import { Form, focus, form, map } from "src/lib/Form"
-import { validated, nonEmpty, Validated } from "src/lib/Validator"
+import { FormBuilder, focus, form, withValue } from "src/lib/FormBuilder"
+import { validated, nonEmpty, Validated, mustEqual } from "src/lib/Validator"
 import { Label, Main } from "src/simple/Simple.styles"
+import { eqString } from "fp-ts/lib/Eq"
 
-type PersonForm = {
-  name: Validated<string>
+type RegistrationFormData = {
   email: Validated<string>
+  password: Validated<string>
+  passwordConfirmation: Validated<string>
 }
 
-const mkPersonFormLens = Lens.fromProp<PersonForm>()
-const nameLens = mkPersonFormLens("name")
+const mkPersonFormLens = Lens.fromProp<RegistrationFormData>()
 const emailLens = mkPersonFormLens("email")
+const passwordLens = mkPersonFormLens("password")
+const passwordConfirmationLens = mkPersonFormLens("passwordConfirmation")
 
-const textInput = (label: string): Form<string, string> => input => ({
+const textInput = (label: string): FormBuilder<string, string> => input => ({
   ui: handleChange => (
     <Label>
       <span>{label}</span>
@@ -29,46 +30,48 @@ const textInput = (label: string): Form<string, string> => input => ({
   result: some(input),
 })
 
-const personForm: Form<PersonForm, ReactNode> = pipe(
+const registrationForm: FormBuilder<RegistrationFormData, ReactNode> = pipe(
   sequenceS(form)({
-    name: pipe(textInput("Name"), validated(nonEmpty("Name")), focus(nameLens)),
     email: pipe(
       textInput("Email"),
       validated(nonEmpty("Email")),
       focus(emailLens),
     ),
+    password: pipe(
+      textInput("Password"),
+      validated(nonEmpty("Password")),
+      focus(passwordLens),
+    ),
+    passwordConfirmation: withValue(({ password }) =>
+      pipe(
+        textInput("Confirm password"),
+        validated(mustEqual(eqString)(password.value, "Passwords must match")),
+        focus(passwordConfirmationLens),
+      ),
+    ),
   }),
-  map(({ name, email }) => (
-    <p>
-      {name} has email address: {email}
-    </p>
-  )),
 )
 
 export function PersonForm() {
-  const [person, setPerson] = useState({
-    name: { value: "", modified: false },
+  const [registration, setRegistration] = useState({
     email: { value: "", modified: false },
+    password: { value: "", modified: false },
+    passwordConfirmation: { value: "", modified: false },
   })
   return (
     <Main>
-      <h1
-        css={css`
-          color: tomato;
-        `}
-      >
-        Currently broken{" "}
-        <span role="img" aria-label="sad face">
-          ☹️
-        </span>
-      </h1>
-      <form
-        css={css`
-          padding: 0 2rem;
-        `}
-      >
-        <div>{personForm(person).ui(setPerson)}</div>
-        <div>{pipe(personForm(person).result, toNullable)}</div>
+      <h1>Registration form</h1>
+      <form>
+        <div>{registrationForm(registration).ui(setRegistration)}</div>
+        <div>
+          {pipe(
+            registrationForm(registration).result,
+            optionFold(
+              () => "Invalid form",
+              r => JSON.stringify(r, null, 2),
+            ),
+          )}
+        </div>
       </form>
     </Main>
   )

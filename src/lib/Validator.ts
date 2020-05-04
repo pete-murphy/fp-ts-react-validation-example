@@ -5,7 +5,7 @@ import { Eq } from "fp-ts/lib/Eq"
 import { ReactNode, createElement } from "react"
 import { pipe } from "fp-ts/lib/pipeable"
 
-import { Form } from "src/lib/Form"
+import { FormBuilder } from "src/lib/FormBuilder"
 import { monoidJsx } from "src/lib/Monoid"
 import * as NES from "src/lib/NonEmptyString"
 import { NonEmptyString } from "src/lib/NonEmptyString"
@@ -26,7 +26,7 @@ export const mustEqual = <A>(E: Eq<A>) => (
   value1: A,
   error: string,
 ): Validator<A, A> => (value2: A) =>
-  E.equals(value1, value2) ? right(value1) : left(error)
+  E.equals(value1, value2) ? right(value2) : left(error)
 
 const displayValidationError = <A>(
   modified: boolean,
@@ -57,8 +57,8 @@ export type Validated<A> = {
 }
 
 export const validated = <I, A, B>(v: Validator<I, B>) => (
-  fa: Form<I, A>,
-): Form<Validated<I>, B> => input => {
+  fa: FormBuilder<I, A>,
+): FormBuilder<Validated<I>, B> => input => {
   const { ui } = fa(input.value)
   const err = v(input.value)
   return {
