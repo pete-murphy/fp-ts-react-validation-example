@@ -4,7 +4,7 @@ import { Lens } from "monocle-ts"
 import { pipe } from "fp-ts/lib/pipeable"
 import { sequenceS } from "fp-ts/lib/Apply"
 
-import { FormBuilder, focus, form, withValue } from "src/lib/FormBuilder"
+import { FormBuilder, focus, formBuilder, withValue } from "src/lib/FormBuilder"
 import { validated, nonEmpty, Validated, mustEqual } from "src/lib/Validator"
 import { Label, Main } from "src/simple/Simple.styles"
 import { eqString } from "fp-ts/lib/Eq"
@@ -20,32 +20,46 @@ const emailLens = mkPersonFormLens("email")
 const passwordLens = mkPersonFormLens("password")
 const passwordConfirmationLens = mkPersonFormLens("passwordConfirmation")
 
-const textInput = (label: string): FormBuilder<string, string> => input => ({
+const textInput = ({
+  label,
+  type = "text",
+}: {
+  label: string
+  type?: "password" | "text"
+}): FormBuilder<Validated<string>, string> => input => ({
   ui: handleChange => (
     <Label>
       <span>{label}</span>
-      <input onChange={e => handleChange(e.target.value)} />
+      <input
+        type={type}
+        onChange={e => handleChange({ ...input, value: e.target.value })}
+      />
     </Label>
   ),
-  result: some(input),
+  result: some(input.value),
 })
 
 const registrationForm: FormBuilder<RegistrationFormData, ReactNode> = pipe(
-  sequenceS(form)({
+  sequenceS(formBuilder)({
     email: pipe(
-      textInput("Email"),
+      textInput({ label: "Email" }),
       validated(nonEmpty("Email")),
       focus(emailLens),
     ),
     password: pipe(
-      textInput("Password"),
+      textInput({ label: "Password", type: "password" }),
       validated(nonEmpty("Password")),
       focus(passwordLens),
     ),
     passwordConfirmation: withValue(({ password }) =>
       pipe(
-        textInput("Confirm password"),
-        validated(mustEqual(eqString)(password.value, "Passwords must match")),
+        textInput({ label: "Confirm password", type: "password" }),
+        pipe(
+          validated(
+            mustEqual(eqString)(password.value, "Passwords must match"),
+          ),
+        ),
+        validated(nonEmpty("Password")),
         focus(passwordConfirmationLens),
       ),
     ),

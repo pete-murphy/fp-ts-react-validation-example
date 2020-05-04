@@ -57,16 +57,16 @@ export type Validated<A> = {
 }
 
 export const validated = <I, A, B>(v: Validator<I, B>) => (
-  fa: FormBuilder<I, A>,
+  fa: FormBuilder<Validated<I>, A>,
 ): FormBuilder<Validated<I>, B> => input => {
-  const { ui } = fa(input.value)
+  const { ui } = fa(input)
   const err = v(input.value)
   return {
     ui: handler =>
       displayValidationError(
         input.modified,
         err,
-        ui(value => handler({ value, modified: true })),
+        ui(({ value }) => handler({ value, modified: true })),
       ),
     result: fromEither(err),
   }

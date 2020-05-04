@@ -35,7 +35,7 @@ export function of<E, A>(a: A): FormBuilder<E, A> {
   })
 }
 
-export const form: Applicative2<URI> = {
+export const formBuilder: Applicative2<URI> = {
   URI,
   map: (ma, f) => input => ({
     ui: ma(input).ui,
@@ -48,19 +48,8 @@ export const form: Applicative2<URI> = {
   }),
 }
 
-export const { map, ap } = pipeable(form)
+export const { map, ap } = pipeable(formBuilder)
 
-// -- | Focus a `FormBuilder` on a smaller piece of state, using a `Lens`.
-// focus
-//   :: forall ui props s a result
-//    . Lens' s a
-//   -> FormBuilder' ui props a result
-//   -> FormBuilder' ui props s result
-// focus l e = FormBuilder \props s ->
-//   let { edit, validate } = un FormBuilder e props (view l s)
-//    in { edit: \k -> edit (k <<< l)
-//       , validate
-//       }
 export const focus = <I, J>(lens: Lens<I, J>) => <A>(
   form: FormBuilder<J, A>,
 ): FormBuilder<I, A> => {
@@ -73,13 +62,6 @@ export const focus = <I, J>(lens: Lens<I, J>) => <A>(
   }
 }
 
-// -- | Make the value available. This allows for changing the structure of a form
-// -- | builder based on the current value.
-// withValue
-//   :: forall ui props unvalidated result
-//    . (unvalidated -> FormBuilder' ui props unvalidated result)
-//   -> FormBuilder' ui props unvalidated result
-// withValue f = FormBuilder \props value -> un FormBuilder (f value) props value
 export const withValue = <I, A>(
   f: (i: I) => FormBuilder<I, A>,
 ): FormBuilder<I, A> => input => f(input)(input)
