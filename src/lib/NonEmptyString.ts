@@ -5,6 +5,4 @@ export interface NonEmptyString
 
 const isNonEmpty = (str: string) => str.length > 0
 
-const prismNonEmptyString = prism<NonEmptyString>(isNonEmpty)
-
-export const fromString = prismNonEmptyString.getOption
+export const fromString = prism<NonEmptyString>(isNonEmpty).getOption
