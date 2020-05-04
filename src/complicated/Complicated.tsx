@@ -5,7 +5,13 @@ import { pipe } from "fp-ts/lib/pipeable"
 import { sequenceS } from "fp-ts/lib/Apply"
 
 import { FormBuilder, focus, formBuilder, withValue } from "src/lib/FormBuilder"
-import { validated, nonEmpty, Validated, mustEqual } from "src/lib/Validator"
+import {
+  validated,
+  nonEmpty,
+  Validated,
+  mustEqual,
+  isValidEmail,
+} from "src/lib/Validator"
 import { Label, Main } from "src/simple/Simple.styles"
 import { eqString } from "fp-ts/lib/Eq"
 
@@ -44,6 +50,7 @@ const registrationForm: FormBuilder<RegistrationFormData, ReactNode> = pipe(
     email: pipe(
       textInput({ label: "Email" }),
       validated(nonEmpty("Email")),
+      validated(isValidEmail),
       focus(emailLens),
     ),
     password: pipe(
@@ -54,12 +61,12 @@ const registrationForm: FormBuilder<RegistrationFormData, ReactNode> = pipe(
     passwordConfirmation: withValue(({ password }) =>
       pipe(
         textInput({ label: "Confirm password", type: "password" }),
+        validated(nonEmpty("Password")),
         pipe(
           validated(
             mustEqual(eqString)(password.value, "Passwords must match"),
           ),
         ),
-        validated(nonEmpty("Password")),
         focus(passwordConfirmationLens),
       ),
     ),
@@ -75,6 +82,9 @@ export function PersonForm() {
   return (
     <Main>
       <h1>Registration form</h1>
+      <p>
+        <em>This is a little bit broken, but mostly works</em>
+      </p>
       <form>
         <div>{registrationForm(registration).ui(setRegistration)}</div>
         <div>

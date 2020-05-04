@@ -1,5 +1,16 @@
-import { Either, left, right, fold as foldEither } from "fp-ts/lib/Either"
-import { Option, fold as foldOption, fromEither } from "fp-ts/lib/Option"
+import {
+  Either,
+  left,
+  right,
+  fold as foldEither,
+  fromPredicate,
+} from "fp-ts/lib/Either"
+import {
+  Option,
+  fold as foldOption,
+  fromEither,
+  chain as chainOption,
+} from "fp-ts/lib/Option"
 import { flow } from "fp-ts/lib/function"
 import { Eq } from "fp-ts/lib/Eq"
 import { ReactNode, createElement } from "react"
@@ -27,6 +38,11 @@ export const mustEqual = <A>(E: Eq<A>) => (
   error: string,
 ): Validator<A, A> => (value2: A) =>
   E.equals(value1, value2) ? right(value2) : left(error)
+
+export const isValidEmail: Validator<string, string> = fromPredicate(
+  (e: string) => e.includes("@"),
+  () => "Invalid email",
+)
 
 const displayValidationError = <A>(
   modified: boolean,
@@ -59,7 +75,7 @@ export type Validated<A> = {
 export const validated = <I, A, B>(v: Validator<I, B>) => (
   fa: FormBuilder<Validated<I>, A>,
 ): FormBuilder<Validated<I>, B> => input => {
-  const { ui } = fa(input)
+  const { ui, result } = fa(input)
   const err = v(input.value)
   return {
     ui: handler =>
@@ -68,6 +84,9 @@ export const validated = <I, A, B>(v: Validator<I, B>) => (
         err,
         ui(({ value }) => handler({ value, modified: true })),
       ),
-    result: fromEither(err),
+    result: pipe(
+      result,
+      chainOption(() => fromEither(err)),
+    ),
   }
 }
