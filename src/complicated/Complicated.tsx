@@ -7,17 +7,17 @@ import { css } from "styled-components"
 import "styled-components/macro"
 
 import { Form, focus, form, map } from "src/lib/Form"
-import { validated, nonEmpty } from "src/lib/Validator"
+import { validated, nonEmpty, Validated } from "src/lib/Validator"
 import { Label, Main } from "src/simple/Simple.styles"
 
-type Person = {
-  name: string
-  email: string
+type PersonForm = {
+  name: Validated<string>
+  email: Validated<string>
 }
 
-const mkPersonLens = Lens.fromProp<Person>()
-const nameLens = mkPersonLens("name")
-const emailLens = mkPersonLens("email")
+const mkPersonFormLens = Lens.fromProp<PersonForm>()
+const nameLens = mkPersonFormLens("name")
+const emailLens = mkPersonFormLens("email")
 
 const textInput = (label: string): Form<string, string> => input => ({
   ui: handleChange => (
@@ -29,7 +29,7 @@ const textInput = (label: string): Form<string, string> => input => ({
   result: some(input),
 })
 
-const personForm: Form<Person, ReactNode> = pipe(
+const personForm: Form<PersonForm, ReactNode> = pipe(
   sequenceS(form)({
     name: pipe(textInput("Name"), validated(nonEmpty("Name")), focus(nameLens)),
     email: pipe(
@@ -46,9 +46,9 @@ const personForm: Form<Person, ReactNode> = pipe(
 )
 
 export function PersonForm() {
-  const [person, setPerson] = useState<Person>({
-    name: "",
-    email: "",
+  const [person, setPerson] = useState({
+    name: { value: "", modified: false },
+    email: { value: "", modified: false },
   })
   return (
     <Main>

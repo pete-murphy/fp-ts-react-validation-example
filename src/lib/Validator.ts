@@ -29,6 +29,7 @@ export const mustEqual = <A>(E: Eq<A>) => (
   E.equals(value1, value2) ? right(value1) : left(error)
 
 const displayValidationError = <A>(
+  modified: boolean,
   err: Either<string, A>,
   node: ReactNode,
 ): ReactNode =>
@@ -36,21 +37,37 @@ const displayValidationError = <A>(
     err,
     foldEither(
       e =>
-        createElement(
-          "p",
-          {
-            style: { color: "tomato" },
-          },
-          e,
-        ),
+        modified
+          ? createElement(
+              "p",
+              {
+                style: { color: "tomato" },
+              },
+              e,
+            )
+          : monoidJsx.empty,
       _ => monoidJsx.empty,
     ),
     el => createElement(Row, null, monoidJsx.concat(node, el)),
   )
 
+export type Validated<A> = {
+  value: A
+  modified: boolean
+}
+
 export const validated = <I, A, B>(v: Validator<I, B>) => (
   fa: Form<I, A>,
-): Form<I, B> => (input: I) => ({
-  ui: handler => displayValidationError(v(input), fa(input).ui(handler)),
-  result: fromEither(v(input)),
-})
+): Form<Validated<I>, B> => input => {
+  const { ui } = fa(input.value)
+  const err = v(input.value)
+  return {
+    ui: handler =>
+      displayValidationError(
+        input.modified,
+        err,
+        ui(value => handler({ value, modified: true })),
+      ),
+    result: fromEither(err),
+  }
+}
