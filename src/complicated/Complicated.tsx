@@ -39,45 +39,50 @@ const textInput = ({
       <input
         type={type}
         onChange={e => handleChange({ ...input, value: e.target.value })}
+        onBlur={() => handleChange({ ...input, blurred: true })}
+        onFocus={() => handleChange({ ...input, blurred: false })}
       />
     </Label>
   ),
   result: some(input.value),
 })
 
-const registrationForm: FormBuilder<RegistrationFormData, ReactNode> = pipe(
-  sequenceS(formBuilder)({
-    email: pipe(
-      textInput({ label: "Email" }),
-      validated(nonEmpty("Email")),
-      validated(isValidEmail),
-      focus(emailLens),
-    ),
-    password: pipe(
-      textInput({ label: "Password", type: "password" }),
+const registrationForm: FormBuilder<
+  RegistrationFormData,
+  ReactNode
+> = sequenceS(formBuilder)({
+  email: pipe(
+    textInput({ label: "Email" }),
+    validated(nonEmpty("Email")),
+    validated(isValidEmail),
+    focus(emailLens),
+  ),
+  password: pipe(
+    textInput({ label: "Password", type: "password" }),
+    validated(nonEmpty("Password")),
+    focus(passwordLens),
+  ),
+  passwordConfirmation: withValue(({ password }) =>
+    pipe(
+      textInput({ label: "Confirm password", type: "password" }),
       validated(nonEmpty("Password")),
-      focus(passwordLens),
+      validated(mustEqual(eqString)(password.value, "Passwords must match")),
+      focus(passwordConfirmationLens),
     ),
-    passwordConfirmation: withValue(({ password }) =>
-      pipe(
-        textInput({ label: "Confirm password", type: "password" }),
-        validated(nonEmpty("Password")),
-        pipe(
-          validated(
-            mustEqual(eqString)(password.value, "Passwords must match"),
-          ),
-        ),
-        focus(passwordConfirmationLens),
-      ),
-    ),
-  }),
-)
+  ),
+})
+
+const emptyValidatedString = {
+  value: "",
+  modified: false,
+  blurred: false,
+}
 
 export function PersonForm() {
   const [registration, setRegistration] = useState({
-    email: { value: "", modified: false },
-    password: { value: "", modified: false },
-    passwordConfirmation: { value: "", modified: false },
+    email: emptyValidatedString,
+    password: emptyValidatedString,
+    passwordConfirmation: emptyValidatedString,
   })
   return (
     <Main>

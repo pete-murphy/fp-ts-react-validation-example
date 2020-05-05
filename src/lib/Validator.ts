@@ -39,8 +39,10 @@ export const mustEqual = <A>(E: Eq<A>) => (
 ): Validator<A, A> => (value2: A) =>
   E.equals(value1, value2) ? right(value2) : left(error)
 
+const validEmailRE = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+
 export const isValidEmail: Validator<string, string> = fromPredicate(
-  (e: string) => e.includes("@"),
+  (e: string) => validEmailRE.test(e),
   () => "Invalid email",
 )
 
@@ -70,6 +72,7 @@ const displayValidationError = <A>(
 export type Validated<A> = {
   value: A
   modified: boolean
+  blurred: boolean
 }
 
 export const validated = <I, A, B>(v: Validator<I, B>) => (
@@ -80,9 +83,9 @@ export const validated = <I, A, B>(v: Validator<I, B>) => (
   return {
     ui: handler =>
       displayValidationError(
-        input.modified,
+        input.modified && input.blurred,
         err,
-        ui(({ value }) => handler({ value, modified: true })),
+        ui(({ value, blurred }) => handler({ value, modified: true, blurred })),
       ),
     result: pipe(
       result,
