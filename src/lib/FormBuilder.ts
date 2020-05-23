@@ -65,3 +65,11 @@ export const focus = <I, J>(lens: Lens<I, J>) => <A>(
 export const withValue = <I, A>(
   f: (i: I) => FormBuilder<I, A>,
 ): FormBuilder<I, A> => input => f(input)(input)
+
+// From Max Willmott's example (https://github.com/Willmo36/form-ts)
+export const mapUI = (f: (ui: ReactNode) => ReactNode) => <E, A>(
+  form: FormBuilder<E, A>,
+): FormBuilder<E, A> => input => ({
+  result: form(input).result,
+  ui: handler => f(form(input).ui(handler)),
+})

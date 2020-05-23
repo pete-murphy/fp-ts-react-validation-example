@@ -4,7 +4,13 @@ import { Lens } from "monocle-ts"
 import { pipe } from "fp-ts/lib/pipeable"
 import { sequenceS } from "fp-ts/lib/Apply"
 
-import { FormBuilder, focus, formBuilder, withValue } from "src/lib/FormBuilder"
+import {
+  FormBuilder,
+  focus,
+  formBuilder,
+  withValue,
+  mapUI,
+} from "src/lib/FormBuilder"
 import {
   validated,
   nonEmpty,
@@ -56,11 +62,13 @@ const registrationForm: FormBuilder<
     validated(nonEmpty("Email")),
     validated(isValidEmail),
     focus(emailLens),
+    mapUI(ui => <div>{ui}</div>),
   ),
   password: pipe(
     textInput({ label: "Password", type: "password" }),
     validated(nonEmpty("Password")),
     focus(passwordLens),
+    mapUI(ui => <div>{ui}</div>),
   ),
   passwordConfirmation: withValue(({ password }) =>
     pipe(
@@ -68,6 +76,7 @@ const registrationForm: FormBuilder<
       validated(nonEmpty("Password")),
       validated(mustEqual(eqString)(password.value, "Passwords must match")),
       focus(passwordConfirmationLens),
+      mapUI(ui => <div>{ui}</div>),
     ),
   ),
 })
@@ -87,9 +96,6 @@ export function PersonForm() {
   return (
     <Main>
       <h1>Registration form</h1>
-      <p>
-        <em>This is a little bit broken, but mostly works</em>
-      </p>
       <form>
         <div>{registrationForm(registration).ui(setRegistration)}</div>
         <div>
